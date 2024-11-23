@@ -1,30 +1,55 @@
-version: '3.8'
-
 services:
-  frontend:
-    build:
-      context: ./frontend
+  phpmyadmin:
+    image: 'phpmyadmin'
+    restart: always
     ports:
-      - "9005:3000"
-    volumes:
-      - ./frontend:/app
-
-  backend:
-    build:
-      context: ./backend
-    ports:
-      - "9006:9000"
-    volumes:
-      - ./backend:/var/www
+      - '4080:80'
     environment:
-      DATABASE_URL: mysql://user:password@mysql:3306/db_name
+      UPLOAD_LIMIT: '500M'
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: pass
+    depends_on:
+      - mysql
 
   mysql:
-    image: mysql:8.0
+    image: 'mysql'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_name
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: pass
+      MYSQL_DATABASE: ui_test
+
+  frontend:
+    container_name: 'frontend'
+    build:
+      dockerfile: Dockerfile
+      context: ./frontend
     ports:
-      - "9080:3306"
+      - '9005:3000'
+    volumes:
+      - './frontend:/app'
+      - '/app/node_modules'
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    command: npm run dev
+
+  backend:
+    container_name: 'backend'
+    build:
+      dockerfile: Dockerfile
+      context: ./backend
+    ports:
+      - '9006:8000'
+    restart: on-failure
+    volumes:
+      - './backend/:/var/www/symfony/'
+    command: sh -c "composer install && php bin/console doctrine:schema:update --complete --force && symfony server:start --listen-ip=0.0.0.0"
+    depends_on:
+      mysql:
+        condition: service_started
+
+volumes:
+  mysql_data:
