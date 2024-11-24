@@ -3,7 +3,7 @@ services:
     image: 'phpmyadmin'
     restart: always
     ports:
-      - '4080:80'
+      - '4088:80'
     environment:
       UPLOAD_LIMIT: '500M'
       PMA_HOST: mysql
