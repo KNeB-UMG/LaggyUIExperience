@@ -30,11 +30,9 @@ services:
       - '9005:3000'
     volumes:
       - './frontend:/app'
-      - '/app/node_modules'
     environment:
       - NODE_ENV=development
-      - NEXT_TELEMETRY_DISABLED=1
-    command: npm run dev
+    command: npm start 
 
   backend:
     container_name: 'backend'
